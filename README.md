@@ -5,7 +5,7 @@ All of these scripts have been at least lightly tested, but come with no warrant
 
 See comments at the top of each script for usage information.
 
-**Important:** Update the config file (named 'config') with the path to your Verus CLI RPC executable and optionally any parameters you want to call the verus RPC client with, such as -chain=vrsctest for working on testnet. Some scripts depend on bc (command-line calculator), jq (command-line json parser, constructor, pretty-printer), or xxd (command-line hex-dumps and reverse hex-dumps).
+**Important:** The config file in this repo is now named config.example, which will allow you to easily pull updates to the repo without worrying about any changes to your config file. To use the tools in this repo you'll need to copy config.example to config and make any customizations needed. The most common item that needs to be updated is the path you your Verus CLI RPC executable (verus) and optionally any parameters you want to call the verus RPC client with, such as -chain=vrsctest for working on testnet. Some scripts depend on bc (command-line calculator), jq (command-line json parser, constructor, pretty-printer), or xxd (command-line hex-dumps and reverse hex-dumps), you should get notices about these if you try to run scripts that depend on them but can't find them.
 
 ## Environment
 
@@ -23,7 +23,7 @@ Fetches the crurent CoinGecko VRSC price. Takes an optional argument for the cur
 ### fetchbootstrap.sh
 Fetch a recent bootstrap file with blockchain data to get up and running quickly on a new install or fix a broken instance without re-syncing the whole chain.
 
-## Messaging
+## Private Messaging
 
 ### sendmessage.sh
 Sendmessage will send an encrypted private message using the memo field of a private transaction. It costs a fee to send, and sends a small amount of Verus to the receipient, both of these amounts are configurable.
@@ -49,11 +49,38 @@ Shows recent wallet transactions printed in an easy-to-read columnized format, w
 ### doeachblock.sh
 Pass a command and its arguments as arguments to doeachblock.sh and it will execute once each time a new block is found, at a maximum of once a second.
 
+### doeachmempool.sh
+Pass a command and its arguments as arguments to doeachmempool.sh and it will execute for each mempool TXID found, appending that TXID to the arguments of the command passed. This will not catch all transactions, since some transactions may make it into blocks without reaching your local mempool, and since there is a 100ms delay between queries to keep system resource usage in check and to prevent flooding the verus daemon. You will also receive duplicates in the case where a transaction in your local mempool is not in the next block you receive - this will run your command once per mempool TXID per block.
+
 ### waitforblockheight.sh
 Blocks execution (waits/sleeps) until the specified block height is reached. Does nothing on its own other than wait, so it's best used in conjunction with another command, separated by ; or &&.
 
 ### waitforverusdexit.sh
 Blocks execution (waits/sleeps) until no more instances of verusd are running. Useful when scripting processes that require shutting down verusd. This will wait for any and all instances regardless of their parameters, so testnet, PBaaS chains, etc., will also keep it from exiting.
+
+### waitforblock.sh
+Blocks execution until a new block is found. Because multiple blocks in a row can be found quickly from staking, and because this only checks once per second, this cannot be used to guarantee only one block has passed by the time execution resumes.
+
+Typical usage might be something like: `./waitforblock.sh; echo "Found a block."`
+
+## Network Statistics
+
+### avgblocktime.sh
+Returns the average block time in seconds for the last N blocks where N is the first and only argument.
+
+### dateofheight.sh
+Finds the date/time of a past block height, or makes a reasonable guess about when a future block height will occur.
+
+The first argument is the target block height. The optional second argument will increase verbosity if set (to any value).
+
+### stakingminingratio.sh
+Returns the number of mined blocks and staked blocks out of the last N, as well as the ratio between the two.
+
+### timesincelastblock.sh
+Provides information about the time since the last block. This was developed with the intention that it would be useful as a frequently updated monitor, such as running it with `watch -n1 ./timesincelastblock.sh`.
+
+### targetheight.sh
+Given a UNIX-epoch-formatted timestamp (the first and only argument), estimate the block height at that time.
 
 ## Sending/Spending
 
@@ -75,6 +102,11 @@ Sweeps all funds from an address to another address, less a transaction fee. Fir
 ### utxodefrag.sh
 Spend all the funds (and all UTXOs) on an address back to the same address in chunks. The first argument is the address, which may be an R-address, an i-address, or an ID name (with @). The optional second argument is the chunk size, which defaults to 5000
 
+## Identities
+
+### identities/vaultcheck.sh
+Call with a list (one or more) of IDs to check as arguments. For each the script will report the ID's vault status - unlocked, time lock, delay lock, or revoked. Make sure to put quotes around ID names containing shell special characters or spaces.
+
 ## Transaction Data
 
 ### fetchtx.sh
@@ -85,6 +117,11 @@ Takes an address as the first argument and returns all UTXOs for that address. J
 
 ### findsmallutxos.sh
 Lists the number of UTXOs below the specified size for each address on which there are any. The size is optionally specified as the first(only) argument, and defaults to 5000.
+
+## Wallet Gen
+
+### bip39gen.sh
+Generate a random bip39-compatible seed phrase. Please see comments in file for more detailed information on trust. Please take the time to understand how it works so you understand any risks. Use at your own risk! I make no claim of safety, or suitability for any purpose.
 
 ## Deprecated
 Scripts that are no longer recommended or are less relevant
